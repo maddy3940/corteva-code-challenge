@@ -73,6 +73,8 @@ Data Analysis Pipeline
 
 ## Results of pipeline run-
 
+I ran the pipleine fully and exported the data from the sql table. Here is the data obtained after initial run- 
+
 https://drive.google.com/drive/folders/1NJfuJmVlmHczBMKu5S5_2FNocy6lkkum?usp=sharing 
 
 ## How to reporduce results
@@ -111,14 +113,29 @@ I am mounting the Files directory for Docker container to access at location /ap
 ```python
 docker-compose up
 ```
+![image](https://user-images.githubusercontent.com/44323045/224838992-6da5497a-1ef6-4636-90b8-0a23dcd97af2.png)
+
 - Now if you see the Docker Desktop app three services will be active- web, ingestion and mysqldb.
 - Ingestion pipleine will run and stop after its done writing the data in the sqldb
 - You can access these tables using MySQL workbench once the ingestion pipleine is run
+![image](https://user-images.githubusercontent.com/44323045/224839317-2bc89385-9c74-42f2-beae-430a5ae4a7e1.png)
+
 - You can also access the data using Flask web app from the endpoints- /api/weather, /api/weather/stats
 
 
 ## Output schema
+- Weather
+![image](https://user-images.githubusercontent.com/44323045/224839555-bdce9465-daed-4870-b821-f1776030889c.png)
 
+- Yield
+![image](https://user-images.githubusercontent.com/44323045/224839618-bfda681c-6eb8-45a6-a7fd-7f3fddf5091d.png)
+
+- Weather_stats
+![image](https://user-images.githubusercontent.com/44323045/224839730-ad823f79-001a-4dec-866c-52e017270455.png)
+
+![image](https://user-images.githubusercontent.com/44323045/224840439-09a76295-c97b-4ab1-9dd4-798476c69a7c.png)
+
+Foreign Key constaints can be added here between Station_ID and Year between all three tables
 
 
 ## More enhancements
