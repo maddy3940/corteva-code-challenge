@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  mysql_db:
+    image: mysql
+    environment:
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+  web:
+    image : corteva_flask_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+  ingestion:
+    image: corteva_ingestion_etl
+    volumes:
+      - "C:/Users/User/Desktop/IUB/Jobs/Companies/Corteva/Git/corteva-code-challenge/etldocker/Files:/app"
+    ports: 
+      - "7000:7000"
+    mem_limit: 4g
+    cpus: 2
+    depends_on:
+      mysql_db:
+        condition: service_healthy

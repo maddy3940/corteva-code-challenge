@@ -1,0 +1,14 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 3306,
+        "username": "root",
+        "password": "password"
+    },
+    "repo_url" : "https://api.github.com/repos/maddy3940/corteva-code-challenge",
+    "weather_path" : "/wx_data",
+    "yield_path" : "/yld_data",
+    "weather_api_endpoint" : "/contents/wx_data",
+    "yield_api_endpoint" : "/contents/yld_data",
+    "url": "https://github.com/maddy3940/corteva-code-challenge"
+}
