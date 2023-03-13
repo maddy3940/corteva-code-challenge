@@ -42,5 +42,48 @@ Ingestion pipeline Diagram
 
 Data Analysis Pipeline
 
+## ETL Procedure
+1. Establish a connection with MySQL database running on port 3306
+2. Check the last commit time when the pipeline was run. I have placed a file inside the LOgs folder called commit_time.txt. It contains two rows that have the timestamp of the last commit that was made to the source data repo [Link](https://github.com/corteva/code-challenge-template). Let's call this committed time as old commit time
+3. When the pipeline runs I have written a decorator to get the latest commit time for the source data repo. If the new commit time is greater than the old commit time then it means the data has been updated and further functions will be executed. This step happens for both the Yield and Weather tables. This is added to avoid unnecessary pipeline runs.
+4. If a new commit is made then first the source data is cloned into a temporary folder in the current working directory. (This step is not optimized, we could have optimized it if it was an S3 bucket by only getting the new files that were inserted, but here I am getting the whole repo. I tried to use the timestamp to just get the new data but there are limitations on the number of requests made via Github API)
+5. Now inside the temp folder, first all the files for weather inside wx_data are read into a data frame and a hash value is computed which is nothing but a concatenation of all the row values. This is done to uniquely identify each row and eliminate duplicates.
+6. Then there is a change detection logic (CDC) in place to get rid of duplicate data or data that has already been entered into the database. Here we have two cases if the SQL database is empty or it already contains some data from the previous run. Both cases are being handled. New data that is coming may have been already inserted in the database. To avoid this we are using hash values and in the CDC step we are computing a set difference between the newly arrived data and the data that is already present in the SQL database on the hash value. Then we drop the duplicates. By doing this we only preserve the unique new data that has arrived in the latest pipeline run.
+7. Here we insert the row into the table even if one column of data has changed, i.e say for example when running the pipeline on 10th March 2023 we got some value for station id 1 for that day. Now when we again run the pipeline on 11th March 2023, and a new data point arrives having a timestamp of 10th March 2023, but with different temperature values, we insert it into the weather table. If all the column reading is the same then we do not insert that record.   
+8. Once the new data is derived, we insert it into the database and commit the transaction. We have placed two decorators to count the count of data being inserted and the amount of time it requires for the execution of all the above-mentioned functions. All these logs are logged into the execution_logs.log file in the current working directory. 
+9. The same steps from 4 to 7 are repeated for yield data.
+10. If the pipeline is being run for the first time, a new database, as well as the tables, are automatically created.
+11. Once weather and yield data is inserted into the tables, the function compute_and_store_analysis function is run to compute the new statistics for the new data that has arrived. We only run the compute_and_store_analysis if some new weather data has arrived. The average maximum temperature, Average minimum temperature, and Total accumulated precipitation for each year and each station id are computed.
+12. Here we have two cases- 
+  a) When the pipeline is run for the first time or data for a new station id or year comes in then all the data is considered and new statistics for every year are calculated and inserted into the database into the weather_stats table 
+  b) - When data is already present in the SQL database then we proceed differently. For example, suppose we have weather data from 1st Jan to 31st July 2022 initially. During the first run, the average and sum statistics are calculated without any issues. But then suppose during the second run data from 1st Aug to 31st Dec comes in. Now we have to recalculate the average and totals for the year 2022. 
+  - Now since we have partial data in the SQL database and partial data we got during the latest pipeline run, we use the hash value column for the weather stats table to get the partial data from the SQL database. For weather stats, hash_value is the concatenation of station id and year which is used to uniquely identify each row in the weather_stats table. 
+  - We now have the full data for 2022 and now we compare the statistics. But before inserting it into the weather_stats table we first delete the existing stats record from the weather stats table, since a particular weather station and a year cannot have multiple statistics. After deleting we insert the newly compted statistics.
+
+
+
+![image](https://user-images.githubusercontent.com/44323045/224821819-74dc5d91-47b8-4ba1-bdc4-2a97aae7c2a6.png)
+
+
+## Results of pipeline run-
+
+https://drive.google.com/drive/folders/1NJfuJmVlmHczBMKu5S5_2FNocy6lkkum?usp=sharing 
+
+## How to reporduce results
+
+#### Local Run via jupyter notebook
+
+
+#### Run as Docker services
+
+## Output schema
+
+
+
+## Assumptions made
+- 
+
+
+
 
 
