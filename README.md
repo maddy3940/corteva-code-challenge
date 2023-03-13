@@ -33,7 +33,14 @@ Each line in the file contains 2 records separated by tabs:
 
 ## Pipeline Architecture
 
+![image](https://user-images.githubusercontent.com/44323045/224803035-91d1689a-6a7c-410e-afd3-e5ef03a4c806.png)
 
+Ingestion pipeline Diagram
+
+
+![image](https://user-images.githubusercontent.com/44323045/224805923-ff17c8f6-a3c2-43b9-8e2c-88f4c939bc32.png)
+
+Data Analysis Pipeline
 
 
 
