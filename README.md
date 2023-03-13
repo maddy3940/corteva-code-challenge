@@ -44,7 +44,10 @@ Data Analysis Pipeline
 
 ## ETL Procedure
 1. Establish a connection with MySQL database running on port 3306
-2. Check the last commit time when the pipeline was run. I have placed a file inside the LOgs folder called commit_time.txt. It contains two rows that have the timestamp of the last commit that was made to the source data repo [Link](https://github.com/corteva/code-challenge-template). Let's call this committed time as old commit time
+2. Check the last commit time when the pipeline was run. I have placed a file inside the Logs folder called commit_time.txt. It contains two rows that have the timestamp of the last commit that was made to the source data repo [Link](https://github.com/corteva/code-challenge-template). Let's call this committed time as old commit time
+
+![image](https://user-images.githubusercontent.com/44323045/224821819-74dc5d91-47b8-4ba1-bdc4-2a97aae7c2a6.png)
+
 3. When the pipeline runs I have written a decorator to get the latest commit time for the source data repo. If the new commit time is greater than the old commit time then it means the data has been updated and further functions will be executed. This step happens for both the Yield and Weather tables. This is added to avoid unnecessary pipeline runs.
 4. If a new commit is made then first the source data is cloned into a temporary folder in the current working directory. (This step is not optimized, we could have optimized it if it was an S3 bucket by only getting the new files that were inserted, but here I am getting the whole repo. I tried to use the timestamp to just get the new data but there are limitations on the number of requests made via Github API)
 5. Now inside the temp folder, first all the files for weather inside wx_data are read into a data frame and a hash value is computed which is nothing but a concatenation of all the row values. This is done to uniquely identify each row and eliminate duplicates.
@@ -59,11 +62,14 @@ Data Analysis Pipeline
   b) - When data is already present in the SQL database then we proceed differently. For example, suppose we have weather data from 1st Jan to 31st July 2022 initially. During the first run, the average and sum statistics are calculated without any issues. But then suppose during the second run data from 1st Aug to 31st Dec comes in. Now we have to recalculate the average and totals for the year 2022. 
   - Now since we have partial data in the SQL database and partial data we got during the latest pipeline run, we use the hash value column for the weather stats table to get the partial data from the SQL database. For weather stats, hash_value is the concatenation of station id and year which is used to uniquely identify each row in the weather_stats table. 
   - We now have the full data for 2022 and now we compare the statistics. But before inserting it into the weather_stats table we first delete the existing stats record from the weather stats table, since a particular weather station and a year cannot have multiple statistics. After deleting we insert the newly compted statistics.
+13. Logs of the run will be appended to a log file which you can access later.
 
+## Flask Application
 
-
-![image](https://user-images.githubusercontent.com/44323045/224821819-74dc5d91-47b8-4ba1-bdc4-2a97aae7c2a6.png)
-
+- I have build simple flask application with two endpoints to get the weather and weather statistics data
+- If you run the docker contianer the endpoints will be active for you to access
+- I have also added a Swagger API endpoint to provide documentation at the endpoint- /apidocs
+ 
 
 ## Results of pipeline run-
 
@@ -72,16 +78,54 @@ https://drive.google.com/drive/folders/1NJfuJmVlmHczBMKu5S5_2FNocy6lkkum?usp=sha
 ## How to reporduce results
 
 #### Local Run via jupyter notebook
+- Clone the repository
+- Run a Mysql service on the port 3306.
+- Edit the config.json file inside Local_run folder to reflrect your database credentials
+- Make sure you have all the required packages mentioned in Local_run/requirements.txt file and python version 3.7.1 along with jupyter notebook.
+- Run all the cells in the ETL.ipynb notebook
+- Open the mysql database and check the three tables that are created.
+- You can run the app.py Flask app locally to get the data from rest API endpoints- /api/weather, /api/weather/stats
+
+For the notebook to run quickly I am taking a subset of the data to insert into the database-
+![image](https://user-images.githubusercontent.com/44323045/224834987-dd00f3d6-ddf8-4ef4-8932-4b5d49d9e410.png)
+
+Remove the slicing ([:10]) to insert all the records into the databsase
 
 
 #### Run as Docker services
+- Install docker
+- Build two Docker images. One inside the folder Ingestion and the Second one inside Flask App using the commands-
+
+```python
+docker build -t corteva_ingestion_etl .
+docker build -t corteva_flask_app .
+```
+
+- Inside the etldocker folder edit the docker-compose.yml file 
+![image](https://user-images.githubusercontent.com/44323045/224836903-cb3d510a-64ef-4d57-aa93-f75fb73e0f0c.png)
+
+I am mounting the Files directory for Docker container to access at location /app. Docker will be able to access the config.json file and write the logsat this location. Edit the highlighted location to point to the Files folder inside etldocker folder.
+
+- Make sure the post 3306 is free. Kill any tasks if its not free
+- Run the following command from the etldocker directory 
+```python
+docker-compose up
+```
+- Now if you see the Docker Desktop app three services will be active- web, ingestion and mysqldb.
+- Ingestion pipleine will run and stop after its done writing the data in the sqldb
+- You can access these tables using MySQL workbench once the ingestion pipleine is run
+- You can also access the data using Flask web app from the endpoints- /api/weather, /api/weather/stats
+
 
 ## Output schema
 
 
 
-## Assumptions made
-- 
+## More enhancements
+
+- I did not try to change the data. I am inserting the data as it is to the database. Depending upon the applcation of this data need might arise to drill down on the day or month or year. If thats the case then while insertion we could have taken the date column and created new columns like month, or year
+- I did not get time to write test cases and perfrom unit testing. But during development I made sure to handle all ther errors and configre proper logging.
+- If I had more time I wa splanning to set up a Github Actions workflow to run the pipleine on a schedule on Heroku. I was planning to push the docker images to docker hub, configure heroku to run the services on a schedule so that whenever new data arrives the pipeline will be triggered.
 
 
 
