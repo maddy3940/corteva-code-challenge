@@ -93,7 +93,6 @@ For the notebook to run quickly I am taking a subset of the data to insert into 
 
 Remove the slicing ([:10]) to insert all the records into the databsase
 
-
 #### Run as Docker services
 - Install docker
 - Build two Docker images. One inside the folder Ingestion and the Second one inside Flask App using the commands-
@@ -122,6 +121,9 @@ docker-compose up
 
 - You can also access the data using Flask web app from the endpoints- /api/weather, /api/weather/stats
 
+## Extra Credit - Deployment
+
+Answer to the question for Deplyment can be found here- [Link](https://github.com/maddy3940/corteva-code-challenge/tree/main/answers)
 
 ## Output schema
 - Weather
